@@ -1,6 +1,4 @@
 const { google } = require('googleapis');
-const fs = require('fs');
-const path = require('path');
 
 // Sheet configuration
 // - Sheet ID is provided by the user and can be overridden via env if needed.
@@ -20,46 +18,29 @@ let rules = [];
  * Create an authenticated Google Sheets client using a Service Account.
  *
  * Authentication:
- * - Uses GOOGLE_APPLICATION_CREDENTIALS env var pointing to the Service Account JSON file.
- * - See README.md for setup instructions.
+ * - GOOGLE_CREDENTIALS_JSON: JSON string of Service Account credentials (required).
+ *   On Render: set this env var with the full credentials.json content.
+ *   Local: $env:GOOGLE_CREDENTIALS_JSON = Get-Content credentials.json -Raw
  */
 function createSheetsClient() {
-  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
 
-  if (!credentialsPath) {
+  if (!credentialsJson) {
     throw new Error(
-      'GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.\n' +
-      'Please set it in PowerShell using:\n' +
-      '  $env:GOOGLE_APPLICATION_CREDENTIALS="C:\\path\\to\\service-account.json"\n' +
-      'Replace "C:\\path\\to\\service-account.json" with the actual path to your Service Account JSON file.'
+      'GOOGLE_CREDENTIALS_JSON environment variable is not set.\n' +
+      'Set it with the full Service Account JSON (e.g. content of credentials.json).'
     );
   }
 
-  // Resolve the path (handles relative paths and ~ expansion)
-  const resolvedPath = path.resolve(credentialsPath);
-
-  if (!fs.existsSync(resolvedPath)) {
-    throw new Error(
-      `Service Account credentials file not found: ${resolvedPath}\n` +
-      'Please verify the file path and set GOOGLE_APPLICATION_CREDENTIALS in PowerShell:\n' +
-      `  $env:GOOGLE_APPLICATION_CREDENTIALS="${resolvedPath}"\n` +
-      'Make sure the file exists at the specified location.'
-    );
-  }
-
-  // Check if file is readable
+  let credentials;
   try {
-    fs.accessSync(resolvedPath, fs.constants.R_OK);
+    credentials = JSON.parse(credentialsJson);
   } catch (err) {
-    throw new Error(
-      `Service Account credentials file is not readable: ${resolvedPath}\n` +
-      'Please check file permissions and ensure the file is readable.\n' +
-      'Set GOOGLE_APPLICATION_CREDENTIALS in PowerShell:\n' +
-      `  $env:GOOGLE_APPLICATION_CREDENTIALS="${resolvedPath}"`
-    );
+    throw new Error('GOOGLE_CREDENTIALS_JSON is invalid JSON: ' + err.message);
   }
 
   const auth = new google.auth.GoogleAuth({
+    credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 

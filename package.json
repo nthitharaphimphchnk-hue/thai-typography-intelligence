@@ -1,0 +1,17 @@
+{
+  "name": "thai-typography-intelligence",
+  "version": "1.0.0",
+  "description": "Rule-based decision engine for Thai typography (TTI) using Google Sheets as the single source of truth.",
+  "main": "tti/index.js",
+  "scripts": {
+    "start": "node tti/server.js",
+    "load-rules": "node tti/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "googleapis": "^170.1.0"
+  }
+}
